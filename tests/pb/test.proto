@@ -1,0 +1,48 @@
+// Copyright 2025 Linka Cloud  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package tests;
+
+option go_package = "go.linka.cloud/protoc-gen-go-kms-wrapping/tests/pb;pb";
+
+import "google/protobuf/wrappers.proto";
+import "wrap/wrap.proto";
+
+message Sensitive {
+  string value = 1 [(go.kms.wrap) = true];
+}
+
+message TestData {
+  message Message {
+    bytes wrapped_bytes = 1 [(go.kms.wrap) = true];
+    string wrapped_string = 2 [(go.kms.wrap) = true];
+  }
+  bytes wrapped_bytes = 1 [(go.kms.wrap) = true];
+  repeated bytes repeated_wrapped_bytes = 2 [(go.kms.wrap) = true];
+  string wrapped_string = 3 [ (go.kms.wrap) = true ];
+  repeated string repeated_wrapped_string = 4 [ (go.kms.wrap) = true ];
+  Message wrapped_message = 5;
+  repeated Message repeated_wrapped_message = 6;
+  int64 int64 = 7;
+
+  google.protobuf.BytesValue wrapped_bytes_value = 8 [ (go.kms.wrap) = true ];
+  repeated google.protobuf.BytesValue repeated_wrapped_bytes_value = 9 [ (go.kms.wrap) = true ];
+  google.protobuf.StringValue wrapped_string_value = 10 [ (go.kms.wrap) = true ];
+  repeated google.protobuf.StringValue repeated_wrapped_string_value = 11 [ (go.kms.wrap) = true ];
+
+  optional string wrapped_optional_string = 12 [ (go.kms.wrap) = true ];
+  optional bytes wrapped_optional_bytes = 13 [ (go.kms.wrap) = true ];
+}

@@ -1,0 +1,12 @@
+version: v2
+managed:
+  enabled: true
+inputs:
+- directory: .
+plugins:
+- remote: buf.build/protocolbuffers/go
+  out: .
+  opt: paths=source_relative
+- local: protoc-gen-go-kms-wrapping
+  out: .
+  opt: paths=source_relative

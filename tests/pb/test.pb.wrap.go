@@ -18,437 +18,156 @@ package pb
 
 import (
 	"context"
-	"encoding/base64"
 
 	wrapping "github.com/hashicorp/go-kms-wrapping/v2"
-	"google.golang.org/protobuf/proto"
+	wrap "go.linka.cloud/protoc-gen-go-kms-wrapping"
 )
 
 var (
 	_ = wrapping.Wrapper(nil)
-	_ = context.Background()
-	_ = proto.Message(nil)
-	_ = base64.RawStdEncoding
+	_ = wrap.Wrapper(nil)
 )
 
 // Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *TestData) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Wrapper interface {
-		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
-	{
-		if len(x.WrappedBytes) != 0 {
-			info, err := w.Encrypt(ctx, x.WrappedBytes, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedBytes, err = proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-		}
+	if err := wrap.WrapValue(ctx, w, &x.WrappedBytes, opts...); err != nil {
+		return err
 	}
 	for i := range x.RepeatedWrappedBytes {
-		{
-			if len(x.RepeatedWrappedBytes[i]) != 0 {
-				info, err := w.Encrypt(ctx, x.RepeatedWrappedBytes[i], opts...)
-				if err != nil {
-					return err
-				}
-				x.RepeatedWrappedBytes[i], err = proto.Marshal(info)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	{
-		if len(x.WrappedString) != 0 {
-			info, err := w.Encrypt(ctx, []byte(x.WrappedString), opts...)
-			if err != nil {
-				return err
-			}
-			b, err := proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-			x.WrappedString = base64.RawStdEncoding.EncodeToString(b)
-		}
-	}
-	for i := range x.RepeatedWrappedString {
-		{
-			if len(x.RepeatedWrappedString[i]) != 0 {
-				info, err := w.Encrypt(ctx, []byte(x.RepeatedWrappedString[i]), opts...)
-				if err != nil {
-					return err
-				}
-				b, err := proto.Marshal(info)
-				if err != nil {
-					return err
-				}
-				x.RepeatedWrappedString[i] = base64.RawStdEncoding.EncodeToString(b)
-			}
-		}
-	}
-	if s, ok := any(x.WrappedMessage).(Wrapper); ok {
-		if err := s.Wrap(ctx, w, opts...); err != nil {
+		if err := wrap.WrapValue(ctx, w, &x.RepeatedWrappedBytes[i], opts...); err != nil {
 			return err
 		}
 	}
+	if err := wrap.WrapValue(ctx, w, &x.WrappedString, opts...); err != nil {
+		return err
+	}
+	for i := range x.RepeatedWrappedString {
+		if err := wrap.WrapValue(ctx, w, &x.RepeatedWrappedString[i], opts...); err != nil {
+			return err
+		}
+	}
+	if err := wrap.WrapValue(ctx, w, x.WrappedMessage, opts...); err != nil {
+		return err
+	}
 	for i := range x.RepeatedWrappedMessage {
-		if s, ok := any(x.RepeatedWrappedMessage[i]).(Wrapper); ok {
-			if err := s.Wrap(ctx, w, opts...); err != nil {
-				return err
-			}
+		if err := wrap.WrapValue(ctx, w, x.RepeatedWrappedMessage[i], opts...); err != nil {
+			return err
 		}
 	}
 	if x.WrappedBytesValue != nil {
-		{
-			if len(x.WrappedBytesValue.Value) != 0 {
-				info, err := w.Encrypt(ctx, x.WrappedBytesValue.Value, opts...)
-				if err != nil {
-					return err
-				}
-				x.WrappedBytesValue.Value, err = proto.Marshal(info)
-				if err != nil {
-					return err
-				}
-			}
+		if err := wrap.WrapValue(ctx, w, &x.WrappedBytesValue.Value, opts...); err != nil {
+			return err
 		}
 	}
 	for i := range x.RepeatedWrappedBytesValue {
 		if x.RepeatedWrappedBytesValue[i] != nil {
-			{
-				if len(x.RepeatedWrappedBytesValue[i].Value) != 0 {
-					info, err := w.Encrypt(ctx, x.RepeatedWrappedBytesValue[i].Value, opts...)
-					if err != nil {
-						return err
-					}
-					x.RepeatedWrappedBytesValue[i].Value, err = proto.Marshal(info)
-					if err != nil {
-						return err
-					}
-				}
+			if err := wrap.WrapValue(ctx, w, &x.RepeatedWrappedBytesValue[i].Value, opts...); err != nil {
+				return err
 			}
 		}
 	}
 	if x.WrappedStringValue != nil {
-		{
-			if len(x.WrappedStringValue.Value) != 0 {
-				info, err := w.Encrypt(ctx, []byte(x.WrappedStringValue.Value), opts...)
-				if err != nil {
-					return err
-				}
-				b, err := proto.Marshal(info)
-				if err != nil {
-					return err
-				}
-				x.WrappedStringValue.Value = base64.RawStdEncoding.EncodeToString(b)
-			}
+		if err := wrap.WrapValue(ctx, w, &x.WrappedStringValue.Value, opts...); err != nil {
+			return err
 		}
 	}
 	for i := range x.RepeatedWrappedStringValue {
 		if x.RepeatedWrappedStringValue[i] != nil {
-			{
-				if len(x.RepeatedWrappedStringValue[i].Value) != 0 {
-					info, err := w.Encrypt(ctx, []byte(x.RepeatedWrappedStringValue[i].Value), opts...)
-					if err != nil {
-						return err
-					}
-					b, err := proto.Marshal(info)
-					if err != nil {
-						return err
-					}
-					x.RepeatedWrappedStringValue[i].Value = base64.RawStdEncoding.EncodeToString(b)
-				}
+			if err := wrap.WrapValue(ctx, w, &x.RepeatedWrappedStringValue[i].Value, opts...); err != nil {
+				return err
 			}
 		}
 	}
 	if x.WrappedOptionalString != nil {
-		{
-			if len(*x.WrappedOptionalString) != 0 {
-				info, err := w.Encrypt(ctx, []byte(*x.WrappedOptionalString), opts...)
-				if err != nil {
-					return err
-				}
-				b, err := proto.Marshal(info)
-				if err != nil {
-					return err
-				}
-				*x.WrappedOptionalString = base64.RawStdEncoding.EncodeToString(b)
-			}
+		if err := wrap.WrapValue(ctx, w, &*x.WrappedOptionalString, opts...); err != nil {
+			return err
 		}
 	}
-	{
-		if len(x.WrappedOptionalBytes) != 0 {
-			info, err := w.Encrypt(ctx, x.WrappedOptionalBytes, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedOptionalBytes, err = proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-		}
+	if err := wrap.WrapValue(ctx, w, &x.WrappedOptionalBytes, opts...); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *TestData) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Unwrapper interface {
-		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
-	{
-		if len(x.WrappedBytes) != 0 {
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(x.WrappedBytes, &info); err != nil {
-				return err
-			}
-			b, err := w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedBytes = b
-		}
+	if err := wrap.UnwrapValue(ctx, w, &x.WrappedBytes, opts...); err != nil {
+		return err
 	}
 	for i := range x.RepeatedWrappedBytes {
-		{
-			if len(x.RepeatedWrappedBytes[i]) != 0 {
-				var info wrapping.BlobInfo
-				if err := proto.Unmarshal(x.RepeatedWrappedBytes[i], &info); err != nil {
-					return err
-				}
-				b, err := w.Decrypt(ctx, &info, opts...)
-				if err != nil {
-					return err
-				}
-				x.RepeatedWrappedBytes[i] = b
-			}
-		}
-	}
-	{
-		if len(x.WrappedString) != 0 {
-			b, err := base64.RawStdEncoding.DecodeString(x.WrappedString)
-			if err != nil {
-				return err
-			}
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(b, &info); err != nil {
-				return err
-			}
-			b, err = w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedString = string(b)
-		}
-	}
-	for i := range x.RepeatedWrappedString {
-		{
-			if len(x.RepeatedWrappedString[i]) != 0 {
-				b, err := base64.RawStdEncoding.DecodeString(x.RepeatedWrappedString[i])
-				if err != nil {
-					return err
-				}
-				var info wrapping.BlobInfo
-				if err := proto.Unmarshal(b, &info); err != nil {
-					return err
-				}
-				b, err = w.Decrypt(ctx, &info, opts...)
-				if err != nil {
-					return err
-				}
-				x.RepeatedWrappedString[i] = string(b)
-			}
-		}
-	}
-	if s, ok := any(x.WrappedMessage).(Unwrapper); ok {
-		if err := s.Unwrap(ctx, w, opts...); err != nil {
+		if err := wrap.UnwrapValue(ctx, w, &x.RepeatedWrappedBytes[i], opts...); err != nil {
 			return err
 		}
 	}
+	if err := wrap.UnwrapValue(ctx, w, &x.WrappedString, opts...); err != nil {
+		return err
+	}
+	for i := range x.RepeatedWrappedString {
+		if err := wrap.UnwrapValue(ctx, w, &x.RepeatedWrappedString[i], opts...); err != nil {
+			return err
+		}
+	}
+	if err := wrap.UnwrapValue(ctx, w, x.WrappedMessage, opts...); err != nil {
+		return err
+	}
 	for i := range x.RepeatedWrappedMessage {
-		if s, ok := any(x.RepeatedWrappedMessage[i]).(Unwrapper); ok {
-			if err := s.Unwrap(ctx, w, opts...); err != nil {
-				return err
-			}
+		if err := wrap.UnwrapValue(ctx, w, x.RepeatedWrappedMessage[i], opts...); err != nil {
+			return err
 		}
 	}
 	if x.WrappedBytesValue != nil {
-		{
-			if len(x.WrappedBytesValue.Value) != 0 {
-				var info wrapping.BlobInfo
-				if err := proto.Unmarshal(x.WrappedBytesValue.Value, &info); err != nil {
-					return err
-				}
-				b, err := w.Decrypt(ctx, &info, opts...)
-				if err != nil {
-					return err
-				}
-				x.WrappedBytesValue.Value = b
-			}
+		if err := wrap.UnwrapValue(ctx, w, &x.WrappedBytesValue.Value, opts...); err != nil {
+			return err
 		}
 	}
 	for i := range x.RepeatedWrappedBytesValue {
 		if x.RepeatedWrappedBytesValue[i] != nil {
-			{
-				if len(x.RepeatedWrappedBytesValue[i].Value) != 0 {
-					var info wrapping.BlobInfo
-					if err := proto.Unmarshal(x.RepeatedWrappedBytesValue[i].Value, &info); err != nil {
-						return err
-					}
-					b, err := w.Decrypt(ctx, &info, opts...)
-					if err != nil {
-						return err
-					}
-					x.RepeatedWrappedBytesValue[i].Value = b
-				}
+			if err := wrap.UnwrapValue(ctx, w, &x.RepeatedWrappedBytesValue[i].Value, opts...); err != nil {
+				return err
 			}
 		}
 	}
 	if x.WrappedStringValue != nil {
-		{
-			if len(x.WrappedStringValue.Value) != 0 {
-				b, err := base64.RawStdEncoding.DecodeString(x.WrappedStringValue.Value)
-				if err != nil {
-					return err
-				}
-				var info wrapping.BlobInfo
-				if err := proto.Unmarshal(b, &info); err != nil {
-					return err
-				}
-				b, err = w.Decrypt(ctx, &info, opts...)
-				if err != nil {
-					return err
-				}
-				x.WrappedStringValue.Value = string(b)
-			}
+		if err := wrap.UnwrapValue(ctx, w, &x.WrappedStringValue.Value, opts...); err != nil {
+			return err
 		}
 	}
 	for i := range x.RepeatedWrappedStringValue {
 		if x.RepeatedWrappedStringValue[i] != nil {
-			{
-				if len(x.RepeatedWrappedStringValue[i].Value) != 0 {
-					b, err := base64.RawStdEncoding.DecodeString(x.RepeatedWrappedStringValue[i].Value)
-					if err != nil {
-						return err
-					}
-					var info wrapping.BlobInfo
-					if err := proto.Unmarshal(b, &info); err != nil {
-						return err
-					}
-					b, err = w.Decrypt(ctx, &info, opts...)
-					if err != nil {
-						return err
-					}
-					x.RepeatedWrappedStringValue[i].Value = string(b)
-				}
+			if err := wrap.UnwrapValue(ctx, w, &x.RepeatedWrappedStringValue[i].Value, opts...); err != nil {
+				return err
 			}
 		}
 	}
 	if x.WrappedOptionalString != nil {
-		{
-			if len(*x.WrappedOptionalString) != 0 {
-				b, err := base64.RawStdEncoding.DecodeString(*x.WrappedOptionalString)
-				if err != nil {
-					return err
-				}
-				var info wrapping.BlobInfo
-				if err := proto.Unmarshal(b, &info); err != nil {
-					return err
-				}
-				b, err = w.Decrypt(ctx, &info, opts...)
-				if err != nil {
-					return err
-				}
-				*x.WrappedOptionalString = string(b)
-			}
+		if err := wrap.UnwrapValue(ctx, w, &*x.WrappedOptionalString, opts...); err != nil {
+			return err
 		}
 	}
-	{
-		if len(x.WrappedOptionalBytes) != 0 {
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(x.WrappedOptionalBytes, &info); err != nil {
-				return err
-			}
-			b, err := w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedOptionalBytes = b
-		}
+	if err := wrap.UnwrapValue(ctx, w, &x.WrappedOptionalBytes, opts...); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *TestData_Message) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Wrapper interface {
-		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
+	if err := wrap.WrapValue(ctx, w, &x.WrappedBytes, opts...); err != nil {
+		return err
 	}
-	{
-		if len(x.WrappedBytes) != 0 {
-			info, err := w.Encrypt(ctx, x.WrappedBytes, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedBytes, err = proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	{
-		if len(x.WrappedString) != 0 {
-			info, err := w.Encrypt(ctx, []byte(x.WrappedString), opts...)
-			if err != nil {
-				return err
-			}
-			b, err := proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-			x.WrappedString = base64.RawStdEncoding.EncodeToString(b)
-		}
+	if err := wrap.WrapValue(ctx, w, &x.WrappedString, opts...); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *TestData_Message) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Unwrapper interface {
-		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
+	if err := wrap.UnwrapValue(ctx, w, &x.WrappedBytes, opts...); err != nil {
+		return err
 	}
-	{
-		if len(x.WrappedBytes) != 0 {
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(x.WrappedBytes, &info); err != nil {
-				return err
-			}
-			b, err := w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedBytes = b
-		}
-	}
-	{
-		if len(x.WrappedString) != 0 {
-			b, err := base64.RawStdEncoding.DecodeString(x.WrappedString)
-			if err != nil {
-				return err
-			}
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(b, &info); err != nil {
-				return err
-			}
-			b, err = w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.WrappedString = string(b)
-		}
+	if err := wrap.UnwrapValue(ctx, w, &x.WrappedString, opts...); err != nil {
+		return err
 	}
 	return nil
 }

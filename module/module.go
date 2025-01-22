@@ -161,15 +161,15 @@ func (m *Module) gen(f pgs.Field, revert bool) (string, bool) {
 	}
 	var bfn func(string) string
 	if revert {
-		bfn = unwrapBytes
+		bfn = unwrapValue
 	} else {
-		bfn = wrapBytes
+		bfn = wrapValue
 	}
 	var sfn func(string) string
 	if revert {
-		sfn = unwrapString
+		sfn = unwrapValue
 	} else {
-		sfn = wrapString
+		sfn = wrapValue
 	}
 	var mfn func(string) string
 	if revert {
@@ -264,90 +264,29 @@ for i := range %s { %s }`, r, e(fmt.Sprintf("%s[i]", r)))
 
 func wrapMessage(r string) string {
 	return fmt.Sprintf(`
-if s, ok := any(%s).(Wrapper); ok {
-	if err := s.Wrap(ctx, w, opts...); err != nil {
-		return err
-	}
+if err := wrap.WrapValue(ctx, w, %[1]s, opts...); err != nil {
+	return err
 }`, r)
 }
 
-func wrapString(r string) string {
+func wrapValue(r string) string {
 	return fmt.Sprintf(`
-{
-	if len(%[1]s) != 0 {
-		info, err := w.Encrypt(ctx, []byte(%[1]s), opts...)
-		if err != nil {
-			return err
-		}
-		b, err := proto.Marshal(info)
-		if err != nil {
-			return err
-		}
-		%[1]s = base64.RawStdEncoding.EncodeToString(b)
-	}
-}`, r)
-}
-
-func wrapBytes(r string) string {
-	return fmt.Sprintf(`
-{
-	if len(%[1]s) != 0 {
-		info, err := w.Encrypt(ctx, %[1]s, opts...)
-		if err != nil {
-			return err
-		}
-		%[1]s, err = proto.Marshal(info)
-		if err != nil {
-			return err
-		}
-	}
+if err := wrap.WrapValue(ctx, w, &%[1]s, opts...); err != nil {
+	return err
 }`, r)
 }
 
 func unwrapMessage(r string) string {
 	return fmt.Sprintf(`
-if s, ok := any(%s).(Unwrapper); ok {
-	if err := s.Unwrap(ctx, w, opts...); err != nil {
-		return err
-	}
+if err := wrap.UnwrapValue(ctx, w, %[1]s, opts...); err != nil {
+	return err
 }`, r)
 }
 
-func unwrapString(r string) string {
+func unwrapValue(r string) string {
 	return fmt.Sprintf(`
-{
-	if len(%[1]s) != 0 {
-		b, err := base64.RawStdEncoding.DecodeString(%[1]s)
-		if err != nil {
-			return err
-		}
-		var info wrapping.BlobInfo
-		if err := proto.Unmarshal(b, &info); err != nil {
-			return err
-		}
-		b, err = w.Decrypt(ctx, &info, opts...)
-		if err != nil {
-			return err
-		}
-		%[1]s = string(b)
-	}
-}`, r)
-}
-
-func unwrapBytes(r string) string {
-	return fmt.Sprintf(`
-{
-	if len(%[1]s) != 0 {
-		var info wrapping.BlobInfo
-		if err := proto.Unmarshal(%[1]s, &info); err != nil {
-			return err
-		}
-		b, err := w.Decrypt(ctx, &info, opts...)
-		if err != nil {
-			return err
-		}
-		%[1]s = b
-	}
+if err := wrap.UnwrapValue(ctx, w, &%[1]s, opts...); err != nil {
+	return err
 }`, r)
 }
 
@@ -361,27 +300,21 @@ package {{ package . }}
 
 import (
 	"context"
-	"encoding/base64"
 
 	wrapping "github.com/hashicorp/go-kms-wrapping/v2"
-	"google.golang.org/protobuf/proto"
+	wrap "go.linka.cloud/protoc-gen-go-kms-wrapping"
 	{{ imports }}
 )
 
 var (
 	_ = wrapping.Wrapper(nil)
-	_ = context.Background()
-	_ = proto.Message(nil)
-	_ = base64.RawStdEncoding
+	_ = wrap.Wrapper(nil)
 )
 
 {{ range .AllMessages }}
 {{- if enabled . }}
 // Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *{{ name . }}) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Wrapper interface {
-		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
 	{{- range .Fields }}
 		{{- wrap . }}
 	{{- end }} 
@@ -390,9 +323,6 @@ func (x *{{ name . }}) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wra
 
 // Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *{{ name . }}) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Unwrapper interface {
-		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
 	{{- range .Fields }}
 		{{- unwrap . }}
 	{{- end }} 

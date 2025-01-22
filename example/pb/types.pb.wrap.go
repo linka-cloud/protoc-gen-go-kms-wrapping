@@ -18,61 +18,28 @@ package pb
 
 import (
 	"context"
-	"encoding/base64"
 
 	wrapping "github.com/hashicorp/go-kms-wrapping/v2"
-	"google.golang.org/protobuf/proto"
+	wrap "go.linka.cloud/protoc-gen-go-kms-wrapping"
 )
 
 var (
 	_ = wrapping.Wrapper(nil)
-	_ = context.Background()
-	_ = proto.Message(nil)
-	_ = base64.RawStdEncoding
+	_ = wrap.Wrapper(nil)
 )
 
 // Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *Sensitive) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Wrapper interface {
-		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
-	{
-		if len(x.Value) != 0 {
-			info, err := w.Encrypt(ctx, []byte(x.Value), opts...)
-			if err != nil {
-				return err
-			}
-			b, err := proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-			x.Value = base64.RawStdEncoding.EncodeToString(b)
-		}
+	if err := wrap.WrapValue(ctx, w, &x.Value, opts...); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *Sensitive) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Unwrapper interface {
-		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
-	{
-		if len(x.Value) != 0 {
-			b, err := base64.RawStdEncoding.DecodeString(x.Value)
-			if err != nil {
-				return err
-			}
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(b, &info); err != nil {
-				return err
-			}
-			b, err = w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.Value = string(b)
-		}
+	if err := wrap.UnwrapValue(ctx, w, &x.Value, opts...); err != nil {
+		return err
 	}
 	return nil
 }

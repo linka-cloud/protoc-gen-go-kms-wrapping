@@ -31,6 +31,84 @@ type Wrapper interface {
 	Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
 }
 
+func WrapValue[T []byte | string | any](ctx context.Context, w wrapping.Wrapper, v *T, opts ...wrapping.Option) error {
+	if v == nil {
+		return nil
+	}
+	switch m := any(v).(type) {
+	case *string:
+		if len(*m) == 0 {
+			return nil
+		}
+		i, err := w.Encrypt(ctx, []byte(*m), opts...)
+		if err != nil {
+			return err
+		}
+		b, err := proto.Marshal(i)
+		if err != nil {
+			return err
+		}
+		*m = base64.RawStdEncoding.EncodeToString(b)
+	case *[]byte:
+		if len(*m) == 0 {
+			return nil
+		}
+		i, err := w.Encrypt(ctx, *m, opts...)
+		if err != nil {
+			return err
+		}
+		b, err := proto.Marshal(i)
+		if err != nil {
+			return err
+		}
+		*m = b
+	case Wrapper:
+		return m.Wrap(ctx, w, opts...)
+	}
+	return nil
+}
+
+func UnwrapValue[T string | []byte | any](ctx context.Context, w wrapping.Wrapper, m *T, opts ...wrapping.Option) error {
+	if m == nil {
+		return nil
+	}
+	switch m := any(m).(type) {
+	case *string:
+		if len(*m) == 0 {
+			return nil
+		}
+		b, err := base64.RawStdEncoding.DecodeString(*m)
+		if err != nil {
+			return err
+		}
+		var i wrapping.BlobInfo
+		if err := proto.Unmarshal(b, &i); err != nil {
+			return err
+		}
+		b, err = w.Decrypt(ctx, &i, opts...)
+		if err != nil {
+			return err
+		}
+		*m = string(b)
+	case *[]byte:
+		if len(*m) == 0 {
+			return nil
+		}
+		var i wrapping.BlobInfo
+		if err := proto.Unmarshal(*m, &i); err != nil {
+			return err
+		}
+		b, err := w.Decrypt(ctx, &i, opts...)
+		if err != nil {
+			return err
+		}
+		*m = b
+	case Wrapper:
+		return m.Unwrap(ctx, w, opts...)
+	}
+	return nil
+}
+
 func Wrap(ctx context.Context, w wrapping.Wrapper, m proto.Message, opts ...wrapping.Option) error {
 	if m == nil {
 		return nil
@@ -72,7 +150,7 @@ func Wrap(ctx context.Context, w wrapping.Wrapper, m proto.Message, opts ...wrap
 				continue
 			}
 			for i := 0; i < l.Len(); i++ {
-				if err := sealField(ctx, w, msg, field, i, opts...); err != nil {
+				if err := wrapField(ctx, w, msg, field, i, opts...); err != nil {
 					return err
 				}
 			}
@@ -87,7 +165,7 @@ func Wrap(ctx context.Context, w wrapping.Wrapper, m proto.Message, opts ...wrap
 		if !seal {
 			continue
 		}
-		if err := sealField(ctx, w, msg, field, -1, opts...); err != nil {
+		if err := wrapField(ctx, w, msg, field, -1, opts...); err != nil {
 			return err
 		}
 	}
@@ -132,7 +210,7 @@ func Unwrap(ctx context.Context, w wrapping.Wrapper, m proto.Message, opts ...wr
 				continue
 			}
 			for i := 0; i < l.Len(); i++ {
-				if err := unsealField(ctx, w, msg, field, i, opts...); err != nil {
+				if err := unwrapField(ctx, w, msg, field, i, opts...); err != nil {
 					return err
 				}
 			}
@@ -147,14 +225,14 @@ func Unwrap(ctx context.Context, w wrapping.Wrapper, m proto.Message, opts ...wr
 		if !seal {
 			continue
 		}
-		if err := unsealField(ctx, w, msg, field, -1, opts...); err != nil {
+		if err := unwrapField(ctx, w, msg, field, -1, opts...); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func sealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, f protoreflect.FieldDescriptor, idx int, opts ...wrapping.Option) error {
+func wrapField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, f protoreflect.FieldDescriptor, idx int, opts ...wrapping.Option) error {
 	if f.Kind() == protoreflect.MessageKind {
 		m = get(m, f, idx).Message()
 		f = f.Message().Fields().ByNumber(1)
@@ -166,7 +244,7 @@ func sealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, 
 		if v == "" {
 			return nil
 		}
-		if err := seal(ctx, w, &v, opts...); err != nil {
+		if err := WrapValue(ctx, w, &v, opts...); err != nil {
 			return err
 		}
 		set(m, f, idx, protoreflect.ValueOfString(v))
@@ -176,7 +254,7 @@ func sealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, 
 		if len(v) == 0 {
 			return nil
 		}
-		if err := seal(ctx, w, &v, opts...); err != nil {
+		if err := WrapValue(ctx, w, &v, opts...); err != nil {
 			return err
 		}
 		set(m, f, idx, protoreflect.ValueOfBytes(v))
@@ -186,36 +264,7 @@ func sealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, 
 	}
 }
 
-func seal[T string | []byte](ctx context.Context, w wrapping.Wrapper, m *T, opts ...wrapping.Option) error {
-	if m == nil || len(*m) == 0 {
-		return nil
-	}
-	switch m := any(m).(type) {
-	case *string:
-		i, err := w.Encrypt(ctx, []byte(*m), opts...)
-		if err != nil {
-			return err
-		}
-		b, err := proto.Marshal(i)
-		if err != nil {
-			return err
-		}
-		*m = base64.RawStdEncoding.EncodeToString(b)
-	case *[]byte:
-		i, err := w.Encrypt(ctx, *m, opts...)
-		if err != nil {
-			return err
-		}
-		b, err := proto.Marshal(i)
-		if err != nil {
-			return err
-		}
-		*m = b
-	}
-	return nil
-}
-
-func unsealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, f protoreflect.FieldDescriptor, idx int, opts ...wrapping.Option) error {
+func unwrapField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message, f protoreflect.FieldDescriptor, idx int, opts ...wrapping.Option) error {
 	if f.Kind() == protoreflect.MessageKind {
 		m = get(m, f, idx).Message()
 		f = f.Message().Fields().ByNumber(1)
@@ -227,7 +276,7 @@ func unsealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message
 		if v == "" {
 			return nil
 		}
-		if err := unseal(ctx, w, &v, opts...); err != nil {
+		if err := UnwrapValue(ctx, w, &v, opts...); err != nil {
 			return err
 		}
 		set(m, f, idx, protoreflect.ValueOfString(v))
@@ -237,7 +286,7 @@ func unsealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message
 		if len(v) == 0 {
 			return nil
 		}
-		if err := unseal(ctx, w, &v, opts...); err != nil {
+		if err := UnwrapValue(ctx, w, &v, opts...); err != nil {
 			return err
 		}
 		set(m, f, idx, protoreflect.ValueOfBytes(v))
@@ -245,39 +294,6 @@ func unsealField(ctx context.Context, w wrapping.Wrapper, m protoreflect.Message
 	default:
 		return fmt.Errorf("%s: unsupported type %s", f.FullName(), f.Kind())
 	}
-}
-
-func unseal[T string | []byte](ctx context.Context, w wrapping.Wrapper, m *T, opts ...wrapping.Option) error {
-	if m == nil || len(*m) == 0 {
-		return nil
-	}
-	switch m := any(m).(type) {
-	case *string:
-		b, err := base64.RawStdEncoding.DecodeString(*m)
-		if err != nil {
-			return err
-		}
-		var i wrapping.BlobInfo
-		if err := proto.Unmarshal(b, &i); err != nil {
-			return err
-		}
-		b, err = w.Decrypt(ctx, &i, opts...)
-		if err != nil {
-			return err
-		}
-		*m = string(b)
-	case *[]byte:
-		var i wrapping.BlobInfo
-		var err error
-		if err = proto.Unmarshal(*m, &i); err != nil {
-			return err
-		}
-		*m, err = w.Decrypt(ctx, &i, opts...)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func get(m protoreflect.Message, f protoreflect.FieldDescriptor, idx int) protoreflect.Value {

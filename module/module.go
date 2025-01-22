@@ -98,7 +98,7 @@ func (m *Module) Name() string {
 	return "go-wrap"
 }
 
-func (m *Module) Check(msg pgs.Message) {
+func (m *Module) Check(msg pgs.Message) bool {
 	m.Push("msg: " + msg.Name().String())
 	defer m.Pop()
 
@@ -106,11 +106,12 @@ func (m *Module) Check(msg pgs.Message) {
 	_, err := msg.Extension(wrap.E_Enabled, &enabled)
 	m.CheckErr(err, "unable to read wrap extension from message")
 	if !enabled {
-		return
+		return false
 	}
 	for _, f := range msg.Fields() {
 		m.check(f)
 	}
+	return true
 }
 
 func (m *Module) check(f pgs.Field) {
@@ -227,11 +228,20 @@ func (m *Module) genFieldUnseal(f pgs.Field) (string, bool) {
 }
 
 func (m *Module) generate(f pgs.File) {
+	m.Push("file: " + f.Name().String())
+	defer m.Pop()
 	if len(f.Messages()) == 0 {
 		return
 	}
+	var enabled bool
 	for _, msg := range f.Messages() {
-		m.Check(msg)
+		if m.Check(msg) {
+			enabled = true
+		}
+	}
+	if !enabled {
+		m.Debugf("no messages enabled, skipping")
+		return
 	}
 	name := m.ctx.OutputPath(f).SetExt(".wrap.go")
 	m.AddGeneratorTemplateFile(name.String(), m.tpl, f)

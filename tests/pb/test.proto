@@ -21,10 +21,6 @@ option go_package = "go.linka.cloud/protoc-gen-go-kms-wrapping/tests/pb;pb";
 import "google/protobuf/wrappers.proto";
 import "wrap/wrap.proto";
 
-message Sensitive {
-  string value = 1 [(go.kms.wrap) = true];
-}
-
 message TestData {
   message Message {
     bytes wrapped_bytes = 1 [(go.kms.wrap) = true];

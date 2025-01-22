@@ -31,49 +31,6 @@ var (
 	_ = base64.RawStdEncoding
 )
 
-func (x *Sensitive) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Wrapper interface {
-		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
-	{
-		if len(x.Value) != 0 {
-			info, err := w.Encrypt(ctx, []byte(x.Value), opts...)
-			if err != nil {
-				return err
-			}
-			b, err := proto.Marshal(info)
-			if err != nil {
-				return err
-			}
-			x.Value = base64.RawStdEncoding.EncodeToString(b)
-		}
-	}
-	return nil
-}
-func (x *Sensitive) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
-	type Unwrapper interface {
-		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
-	}
-	{
-		if len(x.Value) != 0 {
-			b, err := base64.RawStdEncoding.DecodeString(x.Value)
-			if err != nil {
-				return err
-			}
-			var info wrapping.BlobInfo
-			if err := proto.Unmarshal(b, &info); err != nil {
-				return err
-			}
-			b, err = w.Decrypt(ctx, &info, opts...)
-			if err != nil {
-				return err
-			}
-			x.Value = string(b)
-		}
-	}
-	return nil
-}
-
 func (x *TestData) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Wrapper interface {
 		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error

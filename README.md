@@ -33,6 +33,7 @@ option go_package = "go.linka.cloud/protoc-gen-go-kms-wrapping/example/pb;pb";
 import "wrap/wrap.proto";
 
 message Sensitive {
+  option(go.kms.enabled) = true;
   string value = 1 [(go.kms.wrap) = true];
 }
 ```

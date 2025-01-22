@@ -36,6 +36,9 @@ func Wrap(ctx context.Context, w wrapping.Wrapper, m proto.Message, opts ...wrap
 		return nil
 	}
 	msg := m.ProtoReflect()
+	if ok := proto.GetExtension(msg.Descriptor().Options(), wrap.E_Enabled); !ok.(bool) {
+		return nil
+	}
 	fields := msg.Type().Descriptor().Fields()
 	for i := 0; i < fields.Len(); i++ {
 		field := fields.Get(i)

@@ -19,6 +19,14 @@ option go_package = "go.linka.cloud/protoc-gen-go-kms-wrapping;wrap";
 
 import "google/protobuf/descriptor.proto";
 
+extend google.protobuf.MessageOptions {
+  // enabled enables the generation of KMS wrapping code for the message.
+  optional bool enabled = 14242;
+}
+
 extend google.protobuf.FieldOptions {
+  // wrap enables the wrapping of the field.
+  // The field must be a string or bytes type (or well-known types equivalent) to be wrapped.
+  // Message fields will be wrapped if the message implements the Wrapper interface.
   optional bool wrap = 14242;
 }

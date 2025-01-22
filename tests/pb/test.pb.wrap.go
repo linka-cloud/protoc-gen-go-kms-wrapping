@@ -31,6 +31,7 @@ var (
 	_ = base64.RawStdEncoding
 )
 
+// Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *TestData) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Wrapper interface {
 		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
@@ -192,6 +193,8 @@ func (x *TestData) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrappin
 	}
 	return nil
 }
+
+// Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *TestData) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Unwrapper interface {
 		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
@@ -379,6 +382,7 @@ func (x *TestData) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapp
 	return nil
 }
 
+// Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *TestData_Message) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Wrapper interface {
 		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
@@ -410,6 +414,8 @@ func (x *TestData_Message) Wrap(ctx context.Context, w wrapping.Wrapper, opts ..
 	}
 	return nil
 }
+
+// Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *TestData_Message) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Unwrapper interface {
 		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error

@@ -67,13 +67,13 @@ func (m *Module) InitContext(c pgs.BuildContext) {
 			}
 			return imports
 		},
-		"enabled": func(f pgs.Field) bool {
+		"enabled": func(m pgs.Message) (bool, error) {
 			var enabled bool
-			ok, err := f.Extension(wrap.E_Wrap, &enabled)
-			if err != nil || !ok {
-				return true
+			_, err := m.Extension(wrap.E_Enabled, &enabled)
+			if err != nil {
+				return false, err
 			}
-			return enabled
+			return enabled, nil
 		},
 		"wrap": func(f pgs.Field) string {
 			v, _ := m.genFieldSeal(f)
@@ -102,6 +102,12 @@ func (m *Module) Check(msg pgs.Message) {
 	m.Push("msg: " + msg.Name().String())
 	defer m.Pop()
 
+	var enabled bool
+	_, err := msg.Extension(wrap.E_Enabled, &enabled)
+	m.CheckErr(err, "unable to read wrap extension from message")
+	if !enabled {
+		return
+	}
 	for _, f := range msg.Fields() {
 		m.check(f)
 	}
@@ -112,9 +118,9 @@ func (m *Module) check(f pgs.Field) {
 	defer m.Pop()
 	var s bool
 	_, err := f.Extension(wrap.E_Wrap, &s)
-	m.CheckErr(err, "unable to read wrap extension from message")
+	m.CheckErr(err, "unable to read wrap extension from field")
 	if !s {
-		m.Debug("wrap not enabled for message")
+		m.Debug("wrap not enabled for field")
 		return
 	}
 	switch {
@@ -360,28 +366,28 @@ var (
 )
 
 {{ range .AllMessages }}
-
+{{- if enabled . }}
+// Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *{{ name . }}) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Wrapper interface {
 		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
 	}
 	{{- range .Fields }}
-	    {{- if enabled . }}
-			{{- wrap . }}
-        {{- end }}
+		{{- wrap . }}
 	{{- end }} 
 	return nil
 }
+
+// Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *{{ name . }}) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Unwrapper interface {
 		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
 	}
 	{{- range .Fields }}
-	    {{- if enabled . }}
-			{{- unwrap . }}
-        {{- end }}
+		{{- unwrap . }}
 	{{- end }} 
 	return nil
 }
+{{- end }}
 {{- end }}
 `

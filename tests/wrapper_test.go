@@ -40,7 +40,7 @@ func wrapper(t *testing.T, ctx context.Context, id string) wrapping.Wrapper {
 	return w
 }
 
-func TestSeal(t *testing.T) {
+func TestWrap(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -133,7 +133,7 @@ func TestSeal(t *testing.T) {
 
 }
 
-func TestSealEmpty(t *testing.T) {
+func TestWrapEmpty(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -144,5 +144,18 @@ func TestSealEmpty(t *testing.T) {
 	require.Equal(t, m.String(), m2.String())
 
 	require.NoError(t, wrap.Unwrap(ctx, root, m2, wrapping.WithKeyId("root")))
+	require.Equal(t, m.String(), m2.String())
+}
+
+func TestWrapDisabled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	root := wrapper(t, ctx, "root")
+	m := &pb.Noop{
+		Value: "value",
+	}
+	m2 := proto.Clone(m).(*pb.Noop)
+	require.NoError(t, wrap.Wrap(ctx, root, m2, wrapping.WithKeyId("root")))
 	require.Equal(t, m.String(), m2.String())
 }

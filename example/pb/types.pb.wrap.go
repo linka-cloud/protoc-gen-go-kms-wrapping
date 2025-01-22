@@ -31,6 +31,7 @@ var (
 	_ = base64.RawStdEncoding
 )
 
+// Wrap wraps the sensitive struct fields with the provided wrapper.
 func (x *Sensitive) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Wrapper interface {
 		Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
@@ -50,6 +51,8 @@ func (x *Sensitive) Wrap(ctx context.Context, w wrapping.Wrapper, opts ...wrappi
 	}
 	return nil
 }
+
+// Unwrap unwraps the sensitive struct fields with the provided wrapper.
 func (x *Sensitive) Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error {
 	type Unwrapper interface {
 		Unwrap(ctx context.Context, w wrapping.Wrapper, opts ...wrapping.Option) error
